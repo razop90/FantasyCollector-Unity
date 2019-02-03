@@ -44,7 +44,7 @@ public class PlayerHealth : MonoBehaviour
                     currentHealth += health.amount;
                 }
 
-                healthBarImage.fillAmount = currentHealth / startingHealth;
+                SetHealth(currentHealth);
                 health.Pick(pickedAmount);
             }
         }
@@ -120,8 +120,7 @@ public class PlayerHealth : MonoBehaviour
     {
         damaged = true;
 
-        currentHealth -= amount;
-        healthBarImage.fillAmount = currentHealth / startingHealth;
+        SetHealth(currentHealth - amount);
 
         //// Play the hurt sound effect.
         //playerAudio.Play();
@@ -130,6 +129,12 @@ public class PlayerHealth : MonoBehaviour
         {
             Death();
         }
+    }
+
+    public void SetHealth(float amount)
+    {
+        currentHealth = amount;
+        healthBarImage.fillAmount = currentHealth / startingHealth;
     }
 
 

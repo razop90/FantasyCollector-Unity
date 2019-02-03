@@ -2,7 +2,7 @@
 
 public class EnemyManager : MonoBehaviour
 {
-    public PlayerHealth playerHealth;       // Reference to the player's heatlh.
+   // public PlayerHealth playerHealth;       // Reference to the player's heatlh.
     public GameObject enemy;                // The enemy prefab to be spawned.
     public GameObject enemyBoss;            // The enemy boss prefab to be spawned.
     public float spawnTime = 3f;            // How long between each spawn.
@@ -49,13 +49,12 @@ public class EnemyManager : MonoBehaviour
     void Spawn()
     {
         // If the player has no health left
-        if (playerHealth.currentHealth <= 0f)
+        if (GameManager.instance.playerHealth.currentHealth <= 0f)
         {
             return;
         }
 
         int spawnPointIndex = Random.Range(0, spawnPoints.Length);
-
 
         // Create an instance of the enemy prefab at the randomly selected spawn point's position and rotation
         var instance = Instantiate(enemy, spawnPoints[spawnPointIndex].position, spawnPoints[spawnPointIndex].rotation);

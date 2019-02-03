@@ -2,14 +2,18 @@
 
 public class TouchTrigger : MonoBehaviour
 {
-    public Transform player;
     public Transform respawnPoint;
+
+    private void Awake()
+    {
+        GameManager.instance.playerLocation.position = respawnPoint.transform.position;
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (player != null && other.tag == "Player")
+        if (other.tag == "Player")
         {
-            player.transform.position = respawnPoint.transform.position;
+            GameManager.instance.playerLocation.position = respawnPoint.transform.position;
         }
     }
 }
