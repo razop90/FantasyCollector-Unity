@@ -4,7 +4,7 @@ using Random = UnityEngine.Random;
 
 public class EnemyPatrolMovement : MonoBehaviour
 {
-    public float fov = 180f;
+    public float fov = 180f; //angle of view
     public float viewDistance = 20f;
     public float wanderRadius = 10f;
 
@@ -14,13 +14,13 @@ public class EnemyPatrolMovement : MonoBehaviour
     protected NavMeshAgent agent;
     protected Animator animator;
     protected EnemyHealth health;
+    protected bool destroyed = false; //this enemy was already destroyed.
 
     void Start()
     {
         OnStart();
     }
 
-    private bool destroyed = false;
     void Update()
     {
         if (health.isDead)
