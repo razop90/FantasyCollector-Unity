@@ -12,7 +12,7 @@ public class Level1Manager : MonoBehaviour
     public GameObject[] collectables;
 
     private Dictionary<int, string> goals;
-    private bool loaded = false;
+    //private bool loaded = false;
 
     void Start()
     {
@@ -75,25 +75,25 @@ public class Level1Manager : MonoBehaviour
         {
             setGoal(2);
 
-            //var boss = GameObject.FindWithTag("EnemyBoss");
+            var boss = GameObject.FindWithTag("EnemyBoss");
 
-            ////stage 3:: Go to the next level.
-            //if (boss != null && !endingArena.activeInHierarchy)
-            //{
-            //    var health = boss.GetComponent<EnemyHealth>();
-            //    if (health.isDead)
-            //    {
-            //        setGoal(3);
-            //        endingArena.SetActive(true);
-            //    }
-            //}
-
-            //load next level.
-            if (!loaded)
+            //stage 3:: Go to the next level.
+            if (boss != null && !endingArena.activeInHierarchy)
             {
-                loaded = true;
-                GameManager.instance.SwitchScenes(2);
+                var health = boss.GetComponent<EnemyHealth>();
+                if (health.isDead)
+                {
+                    setGoal(3);
+                    endingArena.SetActive(true);
+                }
             }
+
+            ////load next level.
+            //if (!loaded)
+            //{
+            //    loaded = true;
+            //    GameManager.instance.SwitchScenes(2);
+            //}
         }
     }
 
