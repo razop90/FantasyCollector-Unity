@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Shooting : MonoBehaviour
@@ -7,21 +6,19 @@ public class Shooting : MonoBehaviour
     public MaxAmmoAvailable maxAmmo;
     public AvailableAmmo availableAmmo;
     public Transform barrelEnd;
-    public Transform camera;
     public ParticleSystem shooting;
     public GameObject barrel;
 
-    public int bulletSpeed = 50;
+    public int maxDistanceFromTarget = 50;
     public float despawnTime = 3.0f;
 
     public bool shootAble = true;
     public float waitBeforeNextShot = 0.25f;
 
     public AudioClip shootSound;
-    public float shootRadiusIntensity = 20f;
+    public float shootRadiusIntensity = 25f;
     public LayerMask enemiesLayer;
 
-    private GameObject bullet;
     private AudioSource audioSource;
     public AimBehaviourBasic aimBehaviour;
 
@@ -30,7 +27,6 @@ public class Shooting : MonoBehaviour
         maxAmmo.SetAmount(100);
         availableAmmo.SetAmount(100);
 
-        bullet = Resources.Load("bullet_prefeb") as GameObject;
         audioSource = GetComponent<AudioSource>();
 
         barrel.SetActive(false);
@@ -94,14 +90,17 @@ public class Shooting : MonoBehaviour
         barrel.SetActive(true);
         availableAmmo.DecreaseAmmo(1);
         StartCoroutine(ShootingFlashYield());
-        var newBullet = Instantiate(bullet, barrelEnd.position, barrelEnd.rotation) as GameObject;
 
-        newBullet.transform.position += camera.transform.forward * 2;
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0));
+        if (Physics.Raycast(ray, out hit, maxDistanceFromTarget))
+        {
+            hit.transform.SendMessage("OnShootHit", hit.point, SendMessageOptions.DontRequireReceiver);
+        }
 
         #region Bullet Sound
 
         audioSource.PlayOneShot(shootSound);
-        newBullet.GetComponent<Rigidbody>().velocity = camera.transform.forward * bulletSpeed;
 
         Collider[] enemiesNearBy = Physics.OverlapSphere(transform.position, shootRadiusIntensity, enemiesLayer);
         foreach (var enemy in enemiesNearBy)
@@ -112,7 +111,5 @@ public class Shooting : MonoBehaviour
         }
 
         #endregion
-
-        Destroy(newBullet, despawnTime);
     }
 }

@@ -5,13 +5,11 @@ public class EnemyManager : MonoBehaviour
    // public PlayerHealth playerHealth;       // Reference to the player's heatlh.
     public GameObject enemy;                // The enemy prefab to be spawned.
     public GameObject enemyBoss;            // The enemy boss prefab to be spawned.
-    public float spawnTime = 3f;            // How long between each spawn.
-    public Transform[] spawnPoints;         // An array of the spawn points this enemy can spawn from.
-    public int startSpawnEnemiesCount = 10;
     public bool spawnOnTimer = false;
-
-    public GameObject healthPrefab;
-    public GameObject ammoPrefab;
+    public float spawnTime = 3f;            // How long between each spawn.
+    public int startSpawnEnemiesCount = 10;
+    public Transform[] spawnPoints;         // An array of the spawn points this enemy can spawn from.
+    public GameObject[] collectables;
 
     public bool bossWasSpawn { get; private set; }
 
@@ -63,13 +61,7 @@ public class EnemyManager : MonoBehaviour
 
     public void OnEnemyDeath(Transform location)
     {
-        var summon = Random.Range(0, 7);
-        var item = healthPrefab;
-        if (summon > 3)
-        {
-            item = ammoPrefab;
-        }
-
-        Instantiate(item, new Vector3(location.position.x, location.position.y + 1f, location.position.z), Quaternion.identity);
+        var random = Random.Range(0, collectables.Length);
+        Instantiate(collectables[random], new Vector3(location.position.x, location.position.y + 1f, location.position.z), Quaternion.identity);
     }
 }

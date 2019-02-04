@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EnemyShootable : MonoBehaviour
 {
@@ -16,24 +14,12 @@ public class EnemyShootable : MonoBehaviour
         patrolMovement = GetComponent<EnemyPatrolMovement>();
     }
 
-    private void OnTriggerEnter(Collider other)
+    public void OnShootHit(Vector3 hitPoint)
     {
-        Debug.Log("collides: " + other.tag);
-        if (other.tag == "Shoot")
-        {
-            Destroy(other.gameObject);
+        //display blood animation.
+        Instantiate(blood, hitPoint, Quaternion.identity);
 
-            //display blood animation.
-            Instantiate(blood, new Vector3(transform.position.x, other.transform.position.y, transform.position.z), Quaternion.identity);
-
-            health.Damage(damage);
-            patrolMovement.OnAware();
-        }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        health.Damage(damage);
+        patrolMovement.OnAware();
     }
 }
