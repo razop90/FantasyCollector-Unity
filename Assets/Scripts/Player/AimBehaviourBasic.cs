@@ -4,16 +4,17 @@ using System.Collections;
 // AimBehaviour inherits from GenericBehaviour. This class corresponds to aim and strafe behaviour.
 public class AimBehaviourBasic : GenericBehaviour
 {
-    public string aimButton = "Aim";  
-    public Texture2D crosshair;                                      
+    public string aimButton = "Aim";
+    public Texture2D crosshair;
     public ParticleSystem crosshairEffect;
     public float aimTurnSmoothing = 0.15f;                                // Speed of turn response when aiming to match camera facing.
     public Vector3 aimPivotOffset = new Vector3(0.8f, 3.5f, 1f);         // Offset to repoint the camera when aiming.
     public Vector3 aimCamOffset = new Vector3(0f, 0.4f, -0.7f);         // Offset to relocate the camera when aiming.
+    public bool disableAim;
 
     private int aimBool;                                                  // Animator variable related to aiming.
-    public bool aim;                                                     // Boolean to determine whether or not the player is aiming.
-
+    public bool aim { get; private set; }                                                     // Boolean to determine whether or not the player is aiming.
+    public bool isAimEnabled = true;
     public float rotAngle = 0f;
     public float rotSpeed = 130f;
 
@@ -25,32 +26,48 @@ public class AimBehaviourBasic : GenericBehaviour
     }
 
     // Update is used to set features regardless the active behaviour.
-    void Update()
+    private void Update()
     {
-        rotAngle += rotSpeed * Time.deltaTime;
-        if (rotAngle > 360)
-            rotAngle = 0f;
-
-        if (Input.GetMouseButtonUp(1))
+        if (GameManager.instance.isGameOperational)
         {
-            if (aim)
+            if (disableAim)
+            {
+                if (aim)
+                    StartCoroutine(ToggleAimOff());
+                return;
+            }
+
+            rotAngle += rotSpeed * Time.deltaTime;
+            if (rotAngle > 360)
+                rotAngle = 0f;
+
+            if (!isAimEnabled)
             {
                 StartCoroutine(ToggleAimOff());
+                return;
             }
-            else
-            {
-                StartCoroutine(ToggleAimOn());
-            }
-        }
-      
-        // No sprinting while aiming.
-        canSprint = !aim;
 
-        // Set aim boolean on the Animator Controller.
-        behaviourManager.GetAnim.SetBool(aimBool, aim);
+            if (Input.GetMouseButtonUp(1))
+            {
+                if (aim)
+                {
+                    StartCoroutine(ToggleAimOff());
+                }
+                else
+                {
+                    StartCoroutine(ToggleAimOn());
+                }
+            }
+
+            // No sprinting while aiming.
+            canSprint = !aim;
+
+            // Set aim boolean on the Animator Controller.
+            behaviourManager.GetAnim.SetBool(aimBool, aim);
+        }
     }
 
-    IEnumerator mouseDown()
+    private IEnumerator mouseDown()
     {
         while (Input.GetMouseButton(0))
         {
@@ -82,14 +99,14 @@ public class AimBehaviourBasic : GenericBehaviour
     }
 
     // Co-rountine to end aiming mode with delay.
-    private IEnumerator ToggleAimOff()
+    public IEnumerator ToggleAimOff()
     {
         yield return new WaitForSeconds(0.3f);
         if (!Input.GetMouseButton(1))
         {
             aim = false;
-            behaviourManager.GetCamScript.ResetTargetOffsets();
-            behaviourManager.GetCamScript.ResetMaxVerticalAngle();
+            behaviourManager.cameraInfo.ResetTargetOffsets();
+            behaviourManager.cameraInfo.ResetMaxVerticalAngle();
             yield return new WaitForSeconds(0.05f);
             behaviourManager.RevokeOverridingBehaviour(this);
         }
@@ -98,26 +115,32 @@ public class AimBehaviourBasic : GenericBehaviour
     // LocalFixedUpdate overrides the virtual function of the base class.
     public override void LocalFixedUpdate()
     {
-        // Set camera position and orientation to the aim mode parameters.
-        if (aim)
-            behaviourManager.GetCamScript.SetTargetOffsets(aimPivotOffset, aimCamOffset);
+        if (GameManager.instance.isGameOperational)
+        {
+            // Set camera position and orientation to the aim mode parameters.
+            if (aim)
+                behaviourManager.cameraInfo.SetTargetOffsets(aimPivotOffset, aimCamOffset);
+        }
     }
 
     // LocalLateUpdate: manager is called here to set player rotation after camera rotates, avoiding flickering.
     public override void LocalLateUpdate()
     {
-        AimManagement();
+        if (GameManager.instance.isGameOperational)
+        {
+            AimManagement();
+        }
     }
 
     // Handle aim parameters when aiming is active.
-    void AimManagement()
+    private void AimManagement()
     {
         // Deal with the player orientation when aiming.
         Rotating();
     }
 
     // Rotate the player to match correct orientation, according to camera.
-    void Rotating()
+    private void Rotating()
     {
         Vector3 forward = behaviourManager.playerCamera.TransformDirection(Vector3.forward);
         // Player is moving on ground, Y component of camera facing is not relevant.
@@ -125,7 +148,7 @@ public class AimBehaviourBasic : GenericBehaviour
         forward = forward.normalized;
 
         // Always rotates the player according to the camera horizontal rotation in aim mode.
-        Quaternion targetRotation = Quaternion.Euler(0, behaviourManager.GetCamScript.GetH, 0);
+        Quaternion targetRotation = Quaternion.Euler(0, behaviourManager.cameraInfo.GetH, 0);
 
         float minSpeed = Quaternion.Angle(transform.rotation, targetRotation) * aimTurnSmoothing;
 
@@ -136,11 +159,11 @@ public class AimBehaviourBasic : GenericBehaviour
     }
 
     // Draw the crosshair when aiming.
-    void OnGUI()
+    private void OnGUI()
     {
         if (crosshair)
         {
-            float mag = behaviourManager.GetCamScript.GetCurrentPivotMagnitude(aimPivotOffset);
+            float mag = behaviourManager.cameraInfo.GetCurrentPivotMagnitude(aimPivotOffset);
             if (mag < 0.05f)
             {
                 Vector2 pivot = new Vector2(Screen.width / 2, Screen.height / 2);

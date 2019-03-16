@@ -11,17 +11,25 @@ public class MoveBehaviour : GenericBehaviour
     public float jumpHeight = 1.5f;                 // Default jump height.
     public float jumpIntertialForce = 10f;          // Default horizontal inertial force when jumping.
 
+    [Header("Sound")]
+    public AudioClip walkClip;
+    public AudioClip jumpClip;
+
+
     private float speed, speedSeeker;               // Moving speed.
     private int jumpBool;                           // Animator variable related to jumping.
     private int groundedBool;                       // Animator variable related to whether or not the player is on ground.
     private bool jump;                              // Boolean to determine whether or not the player started a jump.
     private bool isColliding;                       // Boolean to determine if the player has collided with an obstacle.
-    private bool isAttacking;
-    private int idleAttackTrigger;
     private int idleNormalTrigger;
-    private int kickAttackTrigger;
-    private int specialAttackTrigger;
+    #region Old
+    //private bool isAttacking;
+    //private int idleAttackTrigger;
+    //private int kickAttackTrigger;
+    //private int specialAttackTrigger;
+    #endregion
     private AimBehaviourBasic aimBehaviour;
+    private AudioSource audio;
 
     // Start is always called after any Awake functions.
     void Start()
@@ -29,11 +37,14 @@ public class MoveBehaviour : GenericBehaviour
         // Set up the references.
         jumpBool = Animator.StringToHash("Jump");
         groundedBool = Animator.StringToHash("Grounded");
-        idleAttackTrigger = Animator.StringToHash("idle_attack");
         idleNormalTrigger = Animator.StringToHash("idle_normal");
-        kickAttackTrigger = Animator.StringToHash("kick_attack");
-        specialAttackTrigger = Animator.StringToHash("special_punch_attack");
+        #region Old
+        //idleAttackTrigger = Animator.StringToHash("idle_attack");
+        //kickAttackTrigger = Animator.StringToHash("kick_attack");
+        //specialAttackTrigger = Animator.StringToHash("special_punch_attack");
+        #endregion
         aimBehaviour = GetComponent<AimBehaviourBasic>();
+        audio = GetComponent<AudioSource>();
 
         behaviourManager.GetAnim.SetBool(groundedBool, true);
 
@@ -46,46 +57,78 @@ public class MoveBehaviour : GenericBehaviour
     // Update is used to set features regardless the active behaviour.
     void Update()
     {
-        // Get jump input.
-        if (!isAttacking && !jump && Input.GetButtonDown(jumpButton) && behaviourManager.IsCurrentBehaviour(this.behaviourCode) && !behaviourManager.IsOverriding())
+        if (GameManager.instance.isGameOperational)
         {
-            jump = true;
+            // Get jump input.
+            //!isAttacking &&
+            if (!jump && Input.GetButtonDown(jumpButton) && behaviourManager.IsCurrentBehaviour(this.behaviourCode) && !behaviourManager.IsOverriding())
+            {
+                jump = true;
+            }
+        }
+        else
+        {
+            AudioHandler(false);
         }
     }
 
     // LocalFixedUpdate overrides the virtual function of the base class.
     public override void LocalFixedUpdate()
     {
-        if (!aimBehaviour.aim && Input.GetAxisRaw(aimBehaviour.aimButton) == 0)
+        if (GameManager.instance.isGameOperational)
         {
-            if (isAttacking && Input.GetKeyDown(KeyCode.Q))
-            {
-                behaviourManager.GetAnim.SetTrigger(specialAttackTrigger);
-            }
-            else if (!isAttacking && Input.GetMouseButtonDown(0))
-            {
-                isAttacking = true;
-                behaviourManager.GetAnim.SetTrigger(idleAttackTrigger);
-                behaviourManager.GetAnim.SetTrigger(kickAttackTrigger);
-            }
-            else if (isAttacking && Input.anyKeyDown)
-            {
-                isAttacking = false;
-            }
-        }
-        else
-        {
-            isAttacking = false;
-        }
+            #region Old
 
-        if (!isAttacking)
-        {
+            //if (!aimBehaviour.aim && Input.GetAxisRaw(aimBehaviour.aimButton) == 0)
+            //{
+            //    if (isAttacking && Input.GetKeyDown(KeyCode.Q))
+            //    {
+            //        behaviourManager.GetAnim.SetTrigger(specialAttackTrigger);
+            //    }
+            //    else if (!isAttacking && Input.GetMouseButtonDown(0))
+            //    {
+            //        isAttacking = true;
+            //        behaviourManager.GetAnim.SetTrigger(idleAttackTrigger);
+            //        behaviourManager.GetAnim.SetTrigger(kickAttackTrigger);
+            //    }
+            //    else if (isAttacking && Input.anyKeyDown)
+            //    {
+            //        isAttacking = false;
+            //    }
+            //}
+            //else
+            //{
+            //    isAttacking = false;
+            //}
+
+            //if (!isAttacking)
+            //{
+
+            #endregion
+
             behaviourManager.GetAnim.SetTrigger(idleNormalTrigger);
             // Call the basic movement manager.
             MovementManagement(behaviourManager.GetH, behaviourManager.GetV);
 
             // Call the jump manager.
             JumpManagement();
+            //}
+
+            if (audio.isPlaying && audio.clip.name == jumpClip.name)
+            {
+                return;
+            }
+            if (behaviourManager.IsMoving() && !behaviourManager.GetAnim.GetBool(jumpBool))
+            {
+                if (!audio.isPlaying)
+                {
+                    AudioHandler(true, walkClip, 0.2f);
+                }
+            }
+            else if ((audio.clip != null && audio.clip.name == walkClip.name) || behaviourManager.GetAnim.GetBool(jumpBool))
+            {
+                AudioHandler(false);
+            }
         }
     }
 
@@ -98,6 +141,7 @@ public class MoveBehaviour : GenericBehaviour
             // Set jump related parameters.
             behaviourManager.LockTempBehaviour(this.behaviourCode);
             behaviourManager.GetAnim.SetBool(jumpBool, true);
+
             // Is a locomotion jump?
             if (behaviourManager.GetAnim.GetFloat(speedFloat) > 0.1)
             {
@@ -108,6 +152,8 @@ public class MoveBehaviour : GenericBehaviour
                 float velocity = 2f * Mathf.Abs(Physics.gravity.y) * jumpHeight;
                 velocity = Mathf.Sqrt(velocity);
                 behaviourManager.GetRigidBody.AddForce(Vector3.up * velocity, ForceMode.VelocityChange);
+
+                AudioHandler(true, jumpClip, 1f);
             }
         }
         // Is already jumping?
@@ -189,6 +235,19 @@ public class MoveBehaviour : GenericBehaviour
         }
 
         return targetDirection;
+    }
+
+    public void AudioHandler(bool startNew, AudioClip clip = null, float volume = 1f)
+    {
+        if (audio.isPlaying)
+            audio.Stop();
+
+        if (startNew)
+        {
+            audio.volume = volume;
+            audio.clip = clip;
+            audio.PlayOneShot(clip);
+        }
     }
 
     // Collision detection.

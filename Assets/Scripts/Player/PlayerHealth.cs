@@ -48,40 +48,14 @@ public class PlayerHealth : MonoBehaviour
                 health.Pick(pickedAmount);
             }
         }
-        else
-        {
-            damageCheck(other);
-        }
     }
 
-    private void OnTriggerStay(Collider other)
-    {
-        damageCheck(other);
-    }
-
-    bool flag = true;
-    IEnumerator EnemyAttackYield(float waiting = 0.3f)
-    {
-        yield return new WaitForSeconds(waiting);
-        flag = true;
-    }
-
-    private void damageCheck(Collider other)
-    {
-        if ((other.tag == "Enemy" || other.tag == "EnemyBoss") && flag)
-        {
-            var health = other.GetComponent<EnemyHealth>();
-            var enemy = other.GetComponent<Enemy>();
-            if (!health.isDead && enemy.isAttacking())
-            {
-                flag = false;
-
-                TakeDamage(enemy.damage);
-
-                StartCoroutine(EnemyAttackYield(enemy.waitingBetweenAttacks));
-            }
-        }
-    }
+    //bool flag = true;
+    //IEnumerator EnemyAttackYield(float waiting = 0.3f)
+    //{
+    //    yield return new WaitForSeconds(waiting);
+    //    flag = true;
+    //}
 
     void Awake()
     {
@@ -95,7 +69,7 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = startingHealth;
     }
 
-    static int count = 0;
+    private static int count = 0;
     void Update()
     {
         // If the player has just been damaged...
@@ -135,26 +109,16 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth = amount;
         healthBarImage.fillAmount = currentHealth / startingHealth;
-    }
 
+        if (currentHealth <= 0 && !isDead)
+        {
+            Death();
+        }
+    }
 
     void Death()
     {
-        //// Set the death flag so this function won't be called again.
-        //isDead = true;
-
-        //// Turn off any remaining shooting effects.
-        //playerShooting.DisableEffects();
-
-        //// Tell the animator that the player is dead.
-        //anim.SetTrigger("Die");
-
-        //// Set the audiosource to play the death clip and play it (this will stop the hurt sound from playing).
-        //playerAudio.clip = deathClip;
-        //playerAudio.Play();
-
-        //// Turn off the movement and shooting scripts.
-        //playerMovement.enabled = false;
-        //playerShooting.enabled = false;
+        isDead = true;
+        anim.SetTrigger("die");
     }
 }

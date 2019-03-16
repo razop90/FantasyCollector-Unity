@@ -73,19 +73,19 @@ public class Shooting : MonoBehaviour
         }
     }
 
-    IEnumerator ShootingYield()
+    private IEnumerator ShootingYield()
     {
         yield return new WaitForSeconds(waitBeforeNextShot);
         shootAble = true;
     }
 
-    IEnumerator ShootingFlashYield()
+    private IEnumerator ShootingFlashYield()
     {
         yield return new WaitForSeconds(0.1f);
         barrel.SetActive(false);
     }
 
-    void Shoot()
+    private void Shoot()
     {
         barrel.SetActive(true);
         availableAmmo.DecreaseAmmo(1);

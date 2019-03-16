@@ -14,17 +14,38 @@ namespace Assets.Scripts.Collectables
         {
             picked = false;
         }
+        private void Start()
+        {
+            Destroy(gameObject, 120);
+        }
 
         public void Pick(int? pickedAmount)
         {
             if (!picked)
             {
+                //GameManager.instance.playerIsPicking = true;
                 DisplayPickedData(pickedAmount == null || pickedAmount > amount ? amount : (int)pickedAmount);
 
                 picked = true;
 
                 if (audioSource == null)
                     audioSource = GetComponent<AudioSource>();
+
+                #region picking animation
+                //AnimatorClipInfo[] clipInfos = null;
+                //float pickingAnimLength = 0f;
+                //try
+                //{
+                //    GameManager.instance.playerAnimator.SetTrigger("pickup");
+                //    clipInfos = GameManager.instance.playerAnimator.GetCurrentAnimatorClipInfo(0);
+                //}
+                //catch (System.Exception e) { Debug.Log(e.Message); }
+
+                //if (clipInfos != null)
+                //    pickingAnimLength = clipInfos[0].clip.length;
+
+                //StartCoroutine(PickingYield(pickingAnimLength));
+                #endregion
 
                 audioSource.PlayOneShot(pickupSound);
                 pickedParticles.Play();
@@ -34,5 +55,6 @@ namespace Assets.Scripts.Collectables
         }
 
         protected virtual void DisplayPickedData(int pickedAmount) { }
+
     }
 }

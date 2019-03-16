@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,20 +12,65 @@ public class EnemyHealth : MonoBehaviour
     public float currentHealth;
     public Image healthBarImage;
     public Canvas healthBarContainer;
-    public AudioClip deathClip;
     public string deathTrigger = "Die";
     public bool isDead { get; protected set; }
 
+    [Header("Sound")]
+    public AudioClip awakeClip;
+    public AudioClip[] clips;
+    public AudioClip deathClip;
+    public AudioClip hurtClip;
 
+    private AudioSource audio;
     private Enemy enemy;
     private Animator anim;
 
     void Awake()
     {
+        audio = GetComponent<AudioSource>();
+        if (awakeClip != null)
+        {
+            audio.Stop();
+            audio.PlayOneShot(awakeClip);
+        }
+
         anim = GetComponent<Animator>();
         enemy = GetComponent<Enemy>();
         currentHealth = startingHealth;
         isDead = false;
+    }
+
+    private int lastPlayedClip = -1;
+    private bool playingInProcess = false;
+    private void Update()
+    {
+        //Play sound.
+        if (clips != null && clips.Length > 0 && !playingInProcess)
+        {
+            if (!audio.isPlaying)
+            {
+                playingInProcess = true;
+                StartCoroutine(PlayRandomClip());
+            }
+        }
+    }
+
+    private IEnumerator PlayRandomClip()
+    {
+        var index = UnityEngine.Random.Range(0, clips.Length);
+
+        while (index == lastPlayedClip)
+        {
+            index = UnityEngine.Random.Range(0, clips.Length);
+        }
+
+        lastPlayedClip = index;
+
+        yield return new WaitForSeconds(clips[index].length / 4);
+
+        if (!audio.isPlaying)
+            audio.PlayOneShot(clips[index]);
+        playingInProcess = false;
     }
 
     public void Damage(float amount)
@@ -35,11 +81,15 @@ public class EnemyHealth : MonoBehaviour
             currentHealth -= amount;
             healthBarImage.fillAmount = currentHealth / startingHealth;
 
+            //play hurt clip
+            if (hurtClip != null && !audio.isPlaying && !playingInProcess)
+            {
+                audio.Stop();
+                audio.PlayOneShot(hurtClip);
+            }
+
             //display the damage amunt on screen
             FloatingTextHandler.CreateFloatingText(transform, "-" + amount.ToString(), Color.yellow);
-
-            //// Play the hurt sound effect.
-            // playerAudio.Play();
         }
 
         if (currentHealth <= 0f && !isDead)
@@ -50,30 +100,21 @@ public class EnemyHealth : MonoBehaviour
 
     void Death()
     {
+        GetComponent<CapsuleCollider>().enabled = false;
         isDead = true;
         healthBarContainer.enabled = false;
         anim.SetTrigger(deathTrigger);
 
-        Destroy(gameObject, 2f);
+        var destroyTime = deathClip != null ? deathClip.length + 0.02f : 2f;
+        Destroy(gameObject, destroyTime);
 
         if (OnDeath != null)
             OnDeath.Invoke(transform);
 
-        //// Set the death flag so this function won't be called again.
-        //isDead = true;
-
-        //// Turn off any remaining shooting effects.
-        //playerShooting.DisableEffects();
-
-        //// Tell the animator that the player is dead.
-        //anim.SetTrigger("Die");
-
-        //// Set the audiosource to play the death clip and play it (this will stop the hurt sound from playing).
-        //playerAudio.clip = deathClip;
-        //playerAudio.Play();
-
-        //// Turn off the movement and shooting scripts.
-        //playerMovement.enabled = false;
-        //playerShooting.enabled = false;
+        if (deathClip != null)
+        {
+            audio.Stop();
+            audio.PlayOneShot(deathClip);
+        }
     }
 }

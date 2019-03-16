@@ -8,6 +8,6 @@ public class AmmoCollectable : Collectable
     {
         base.DisplayPickedData(pickedAmount);
 
-        FloatingTextHandler.CreateFloatingText(transform.position, "+" + pickedAmount.ToString(), Color.blue, 25);
+        FloatingTextHandler.CreateFloatingText(transform.position, "+" + pickedAmount.ToString(), Color.cyan, 25);
     }
 }

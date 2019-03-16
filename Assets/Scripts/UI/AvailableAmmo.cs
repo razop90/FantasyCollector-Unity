@@ -58,7 +58,6 @@ public class AvailableAmmo : MonoBehaviour
 
     public bool IsAmmoAvailable()
     {
-        Debug.Log("check");
         if (Ammo <= 0)
         {
             //play no ammo animation on text
